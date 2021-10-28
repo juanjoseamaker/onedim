@@ -32,7 +32,10 @@ pub fn main() {
     let mut main_camera_velocity: (f32, f32) = (0.0, 0.0);
 
     let mut system = System::new(
-        vec![Body::new(0.0, 10.0, 10.0, 100, Color::RED)],
+        vec![
+            Body::new(0.0, 30.0, 10.0, 100, Color::RED),
+            Body::new(500.0, -30.0, 10.0, 100, Color::BLUE),
+        ],
         0.0,
         98.0,
         (HEIGHT / 2) as i32,
