@@ -12,6 +12,8 @@ pub struct System {
     pub bodies: Vec<Body>,
     pub angle: f32,
     pub gravity: f32,
+    pub kfriction_coefficient: f32,
+    pub sfriction_coefficient: f32,
     pub surface_y: i32,
     pub elastic_collisions: bool,
 }
@@ -21,6 +23,8 @@ impl System {
         bodies: Vec<Body>,
         angle: f32,
         gravity: f32,
+        kfriction_coefficient: f32,
+        sfriction_coefficient: f32,
         surface_y: i32,
         elastic_collisions: bool,
     ) -> System {
@@ -28,13 +32,15 @@ impl System {
             bodies,
             angle,
             gravity,
+            kfriction_coefficient,
+            sfriction_coefficient,
             surface_y,
             elastic_collisions,
         }
     }
 
     pub fn update(&mut self, dt: Duration) {
-        // Dynamic
+        // Dynamics
         let mut changes: Vec<(usize, f32, f32)> = vec![]; // Change (index, new_velocity, new_position)
 
         for i1 in 0..self.bodies.len() {
@@ -68,7 +74,7 @@ impl System {
                                 / (self.bodies[i1].mass + self.bodies[i2].mass),
                             self.bodies[i1].position
                                 + (self.bodies[i1].position - self.bodies[i2].position)
-                                    / (1000 - self.bodies[i1].size - self.bodies[i2].size) as f32, // NOTE: solution to inelastic collisions can overlap bodies
+                                    / (1000.0 - self.bodies[i1].size as f32 - self.bodies[i2].size as f32).abs(), // NOTE: solution to inelastic collisions can overlap bodies
                         ));
 
                         println!("Calculating Collision");
@@ -84,7 +90,22 @@ impl System {
 
         // Kinematics
         for body in self.bodies.iter_mut() {
+            // Gravity
             body.force += -self.gravity * body.mass * self.angle.sin();
+
+            // Friction
+            if body.velocity.abs() > 1.0 {
+                println!("{}", body.velocity);
+                body.force -= (self.kfriction_coefficient * self.gravity * body.mass * self.angle.cos()).copysign(body.velocity);
+            } else {
+                body.velocity = 0.0;
+                if body.force.abs() > (self.sfriction_coefficient * self.gravity * body.mass * self.angle.cos()).abs() {
+                    body.force -= (self.sfriction_coefficient * self.gravity * body.mass * self.angle.cos()).copysign(body.force);
+                } else {
+                    body.force = 0.0;
+                }
+            }
+
             body.update(dt);
             body.force = 0.0;
         }

@@ -33,13 +33,14 @@ pub fn main() {
 
     let mut system = System::new(
         vec![
-            Body::new(0.0, 30.0, 10.0, 100, Color::RED),
-            Body::new(500.0, -30.0, 10.0, 100, Color::BLUE),
+            Body::new(0.0, 500.0, 10.0, 100, Color::RED),
         ],
         0.1,
         98.0,
+        1.0,
+        2.0,
         (HEIGHT / 2) as i32,
-        false
+        true
     );
 
     'running: loop {
@@ -51,10 +52,10 @@ pub fn main() {
                     ..
                 } => break 'running,
                 Event::KeyDown { keycode, .. } => match keycode {
-                    Some(Keycode::Up) => main_camera_velocity.1 = -2.0,
-                    Some(Keycode::Down) => main_camera_velocity.1 = 2.0,
-                    Some(Keycode::Right) => main_camera_velocity.0 = 2.0,
-                    Some(Keycode::Left) => main_camera_velocity.0 = -2.0,
+                    Some(Keycode::Up) => main_camera_velocity.1 = -5.0,
+                    Some(Keycode::Down) => main_camera_velocity.1 = 5.0,
+                    Some(Keycode::Right) => main_camera_velocity.0 = 5.0,
+                    Some(Keycode::Left) => main_camera_velocity.0 = -5.0,
                     _ => {}
                 },
                 Event::KeyUp { keycode, .. } => match keycode {
