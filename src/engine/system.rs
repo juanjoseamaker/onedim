@@ -13,21 +13,29 @@ pub struct System {
     pub angle: f32,
     pub gravity: f32,
     pub surface_y: i32,
+    pub elastic_collisions: bool,
 }
 
 impl System {
-    pub fn new(bodies: Vec<Body>, angle: f32, gravity: f32, surface_y: i32) -> System {
+    pub fn new(
+        bodies: Vec<Body>,
+        angle: f32,
+        gravity: f32,
+        surface_y: i32,
+        elastic_collisions: bool,
+    ) -> System {
         System {
             bodies,
             angle,
             gravity,
             surface_y,
+            elastic_collisions,
         }
     }
 
     pub fn update(&mut self, dt: Duration) {
         // Dynamic
-        let mut changes: Vec<(usize, f32)> = vec![]; // Change (index, new_velocity)
+        let mut changes: Vec<(usize, f32, f32)> = vec![]; // Change (index, new_velocity, new_position)
 
         for i1 in 0..self.bodies.len() {
             for i2 in 0..self.bodies.len() {
@@ -39,21 +47,39 @@ impl System {
                         self.bodies[i2].size as f32,
                     )
                 {
-                    changes.push((
-                        i1,
-                        ((self.bodies[i1].mass - self.bodies[i2].mass)
-                            / (self.bodies[i1].mass + self.bodies[i2].mass))
-                            * self.bodies[i1].velocity
-                            + ((2.0 * self.bodies[i2].mass)
+                    if self.elastic_collisions {
+                        changes.push((
+                            i1,
+                            ((self.bodies[i1].mass - self.bodies[i2].mass)
                                 / (self.bodies[i1].mass + self.bodies[i2].mass))
-                                * self.bodies[i2].velocity,
-                    ));
+                                * self.bodies[i1].velocity
+                                + ((2.0 * self.bodies[i2].mass)
+                                    / (self.bodies[i1].mass + self.bodies[i2].mass))
+                                    * self.bodies[i2].velocity,
+                            self.bodies[i1].position,
+                        ));
+
+                        println!("Calculating Collision");
+                    } else {
+                        changes.push((
+                            i1,
+                            (self.bodies[i1].velocity * self.bodies[i1].mass
+                                + self.bodies[i2].velocity * self.bodies[i2].mass)
+                                / (self.bodies[i1].mass + self.bodies[i2].mass),
+                            self.bodies[i1].position
+                                + (self.bodies[i1].position - self.bodies[i2].position)
+                                    / (1000 - self.bodies[i1].size - self.bodies[i2].size) as f32, // NOTE: solution to inelastic collisions can overlap bodies
+                        ));
+
+                        println!("Calculating Collision");
+                    }
                 }
             }
         }
 
         for change in changes {
             self.bodies[change.0].velocity = change.1;
+            self.bodies[change.0].position = change.2;
         }
 
         // Kinematics

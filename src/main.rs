@@ -36,9 +36,10 @@ pub fn main() {
             Body::new(0.0, 30.0, 10.0, 100, Color::RED),
             Body::new(500.0, -30.0, 10.0, 100, Color::BLUE),
         ],
-        0.0,
+        0.1,
         98.0,
         (HEIGHT / 2) as i32,
+        false
     );
 
     'running: loop {
