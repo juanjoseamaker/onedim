@@ -33,14 +33,16 @@ pub fn main() {
 
     let mut system = System::new(
         vec![
-            Body::new(0.0, 500.0, 10.0, 100, Color::RED),
+            Body::new(0.0, 200.0, 10.0, 100, Color::RED),
+            // Body::new(1000.0, -500.0, 10.0, 100, Color::BLUE),
+            // Body::new(2000.0, -650.0, 10.0, 100, Color::YELLOW),
         ],
-        0.1,
+        std::f32::consts::PI/6.0,
         98.0,
+        0.5,
         1.0,
-        2.0,
         (HEIGHT / 2) as i32,
-        true
+        true,
     );
 
     'running: loop {

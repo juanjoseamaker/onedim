@@ -7,6 +7,8 @@ use std::time::Duration;
 use super::super::render::camera::Camera;
 use super::body::Body;
 
+const ANGLE_GUIDE_LINE_LEN: f32 = 1000.0;
+
 // Set of bodies and other objects that interact with each other
 pub struct System {
     pub bodies: Vec<Body>,
@@ -74,7 +76,10 @@ impl System {
                                 / (self.bodies[i1].mass + self.bodies[i2].mass),
                             self.bodies[i1].position
                                 + (self.bodies[i1].position - self.bodies[i2].position)
-                                    / (1000.0 - self.bodies[i1].size as f32 - self.bodies[i2].size as f32).abs(), // NOTE: solution to inelastic collisions can overlap bodies
+                                    / (1000.0
+                                        - self.bodies[i1].size as f32
+                                        - self.bodies[i2].size as f32)
+                                        .abs(), // NOTE: solution to inelastic collisions can overlap bodies
                         ));
 
                         println!("Calculating Collision");
@@ -95,12 +100,18 @@ impl System {
 
             // Friction
             if body.velocity.abs() > 1.0 {
-                println!("{}", body.velocity);
-                body.force -= (self.kfriction_coefficient * self.gravity * body.mass * self.angle.cos()).copysign(body.velocity);
+                body.force -=
+                    (self.kfriction_coefficient * self.gravity * body.mass * self.angle.cos())
+                        .copysign(body.velocity);
             } else {
-                body.velocity = 0.0;
-                if body.force.abs() > (self.sfriction_coefficient * self.gravity * body.mass * self.angle.cos()).abs() {
-                    body.force -= (self.sfriction_coefficient * self.gravity * body.mass * self.angle.cos()).copysign(body.force);
+                println!("s");
+                if body.force.abs()
+                    > (self.sfriction_coefficient * self.gravity * body.mass * self.angle.cos())
+                        .abs()
+                {
+                    body.force -=
+                        (self.sfriction_coefficient * self.gravity * body.mass * self.angle.cos())
+                            .copysign(body.force);
                 } else {
                     body.force = 0.0;
                 }
@@ -131,9 +142,8 @@ impl System {
             .draw_line(
                 Point::new(x0 as i32, surface_canvas_y as i32),
                 Point::new(
-                    screen_width as i32,
-                    surface_canvas_y as i32
-                        - (-self.angle.sin() * (camera.x + screen_width as f32).abs()) as i32,
+                    x0 as i32 + (ANGLE_GUIDE_LINE_LEN * self.angle.cos()) as i32,
+                    surface_canvas_y as i32 + (ANGLE_GUIDE_LINE_LEN * self.angle.sin()) as i32,
                 ),
             )
             .unwrap();
