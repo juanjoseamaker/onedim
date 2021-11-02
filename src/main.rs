@@ -7,6 +7,7 @@ use std::time::Duration;
 
 mod render;
 use render::camera::Camera;
+use render::graph::Graph;
 
 mod engine;
 use engine::body::Body;
@@ -34,15 +35,34 @@ pub fn main() {
     let mut system = System::new(
         vec![
             Body::new(0.0, 200.0, 10.0, 100, Color::RED),
-            // Body::new(1000.0, -500.0, 10.0, 100, Color::BLUE),
-            // Body::new(2000.0, -650.0, 10.0, 100, Color::YELLOW),
+            Body::new(1000.0, -100.0, 10.0, 100, Color::BLUE),
+            Body::new(-1000.0, 500.0, 10.0, 100, Color::YELLOW),
+            Body::new(-1500.0, 800.0, 10.0, 100, Color::MAGENTA),
         ],
-        std::f32::consts::PI/6.0,
+        std::f32::consts::PI / 4.0,
         98.0,
-        0.5,
-        1.0,
+        0.0,
+        0.0,
         (HEIGHT / 2) as i32,
         true,
+        1500,
+    );
+
+    let energy = system.energy();
+    let total_energy = energy.0 + energy.1;
+
+    dbg!("Total energy", total_energy);
+
+    let mut graph = Graph::new(
+        vec![
+            (Color::WHITE, total_energy),
+            (Color::YELLOW, 0.0),
+            (Color::BLUE, 0.0),
+            (Color::GRAY, 0.0),
+        ],
+        total_energy,
+        WIDTH as i32/4,
+        WIDTH as i32/2,
     );
 
     'running: loop {
@@ -77,8 +97,15 @@ pub fn main() {
         // Game Loop
         main_camera.displace(main_camera_velocity.0, main_camera_velocity.1);
         system.update(Duration::new(0, 1_000_000_000u32 / FPS));
+
+        let energy = system.energy();
+        graph.data[1].1 = energy.0;
+        graph.data[2].1 = energy.1;
+        graph.data[3].1 = total_energy - energy.0 - energy.1;
+
         system.draw(&mut canvas, &main_camera);
         system.draw_guide_lines(&mut canvas, &main_camera, WIDTH, HEIGHT);
+        graph.draw(&mut canvas);
 
         canvas.present();
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FPS));

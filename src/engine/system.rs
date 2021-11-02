@@ -18,6 +18,7 @@ pub struct System {
     pub sfriction_coefficient: f32,
     pub surface_y: i32,
     pub elastic_collisions: bool,
+    pub size: i32,
 }
 
 impl System {
@@ -29,6 +30,7 @@ impl System {
         sfriction_coefficient: f32,
         surface_y: i32,
         elastic_collisions: bool,
+        size: i32,
     ) -> System {
         System {
             bodies,
@@ -38,6 +40,7 @@ impl System {
             sfriction_coefficient,
             surface_y,
             elastic_collisions,
+            size,
         }
     }
 
@@ -67,7 +70,7 @@ impl System {
                             self.bodies[i1].position,
                         ));
 
-                        println!("Calculating Collision");
+                        dbg!("Calculating Collision");
                     } else {
                         changes.push((
                             i1,
@@ -79,10 +82,10 @@ impl System {
                                     / (1000.0
                                         - self.bodies[i1].size as f32
                                         - self.bodies[i2].size as f32)
-                                        .abs(), // NOTE: solution to inelastic collisions can overlap bodies
+                                        .abs(), // NOTE: solution to: inelastic collisions can overlap bodies
                         ));
 
-                        println!("Calculating Collision");
+                        dbg!("Calculating Collision");
                     }
                 }
             }
@@ -104,7 +107,6 @@ impl System {
                     (self.kfriction_coefficient * self.gravity * body.mass * self.angle.cos())
                         .copysign(body.velocity);
             } else {
-                println!("s");
                 if body.force.abs()
                     > (self.sfriction_coefficient * self.gravity * body.mass * self.angle.cos())
                         .abs()
@@ -113,6 +115,26 @@ impl System {
                         (self.sfriction_coefficient * self.gravity * body.mass * self.angle.cos())
                             .copysign(body.force);
                 } else {
+                    body.force = 0.0;
+                }
+            }
+
+            if body.position < -self.size as f32 {
+                body.position = -self.size as f32;
+                if self.elastic_collisions {
+                    body.velocity = -body.velocity;
+                    body.force = 0.0;
+                } else {
+                    body.velocity = 0.0;
+                    body.force = 0.0;
+                }
+            } else if body.position > self.size as f32 {
+                body.position = self.size as f32;
+                if self.elastic_collisions {
+                    body.velocity = -body.velocity;
+                    body.force = 0.0;
+                } else {
+                    body.velocity = 0.0;
                     body.force = 0.0;
                 }
             }
@@ -161,6 +183,30 @@ impl System {
                 Point::new(x0 as i32, screen_height as i32),
             )
             .unwrap();
+        
+        canvas
+            .draw_line(
+                Point::new(x0 as i32 + self.size, 0),
+                Point::new(x0 as i32 + self.size, screen_height as i32),
+            )
+            .unwrap();
+        canvas
+            .draw_line(
+                Point::new(x0 as i32 - self.size, 0),
+                Point::new(x0 as i32 - self.size, screen_height as i32),
+            )
+            .unwrap();
+    }
+
+    pub fn energy(&self) -> (f32, f32) {
+        let mut result: (f32, f32) = (0.0, 0.0);
+        
+        for body in self.bodies.iter() {
+            result.0 += 0.5 * body.mass * body.velocity * body.velocity;
+            result.1 += body.mass * self.gravity * (body.position + self.size as f32) * self.angle.sin();
+        }
+
+        result
     }
 }
 
