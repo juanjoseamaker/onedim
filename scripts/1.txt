@@ -1,0 +1,5 @@
+set angle 0.78539816339
+set gravity 98.0
+set size 1500
+set elastic_collision true
+new 0.0 200.0 10.0 100 255 0 0

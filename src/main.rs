@@ -1,5 +1,7 @@
 extern crate sdl2;
 
+use std::env;
+use std::process;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -10,7 +12,6 @@ use render::camera::Camera;
 use render::graph::Graph;
 
 mod engine;
-use engine::body::Body;
 use engine::system::System;
 
 const WIDTH: u32 = 1200;
@@ -33,25 +34,28 @@ pub fn main() {
     let mut main_camera_velocity: (f32, f32) = (0.0, 0.0);
 
     let mut system = System::new(
-        vec![
-            Body::new(0.0, 200.0, 10.0, 100, Color::RED),
-            Body::new(1000.0, -100.0, 10.0, 100, Color::BLUE),
-            Body::new(-1000.0, 500.0, 10.0, 100, Color::YELLOW),
-            Body::new(-1500.0, 800.0, 10.0, 100, Color::MAGENTA),
-        ],
-        std::f32::consts::PI / 4.0,
-        98.0,
+        vec![],
+        0.0,
+        0.0,
         0.0,
         0.0,
         (HEIGHT / 2) as i32,
-        true,
-        1500,
+        false,
+        1000,
     );
+
+    let mut args = env::args();
+    let program_name_arg = args.next();
+    system.run_script(args.next().unwrap_or_else(|| {
+        eprintln!("Usage: {} [script filename]", program_name_arg.unwrap());
+        process::exit(1);
+    }).as_str()).unwrap_or_else(|err| {
+        eprintln!("Failed to run the script: {}", err);
+        process::exit(1);
+    });
 
     let energy = system.energy();
     let total_energy = energy.0 + energy.1;
-
-    dbg!("Total energy", total_energy);
 
     let mut graph = Graph::new(
         vec![

@@ -2,6 +2,8 @@ use sdl2::pixels::Color;
 use sdl2::rect::Point;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
+use std::error::Error;
+use std::fs;
 use std::time::Duration;
 
 use super::super::render::camera::Camera;
@@ -183,7 +185,6 @@ impl System {
                 Point::new(x0 as i32, screen_height as i32),
             )
             .unwrap();
-        
         canvas
             .draw_line(
                 Point::new(x0 as i32 + self.size, 0),
@@ -200,13 +201,143 @@ impl System {
 
     pub fn energy(&self) -> (f32, f32) {
         let mut result: (f32, f32) = (0.0, 0.0);
-        
         for body in self.bodies.iter() {
             result.0 += 0.5 * body.mass * body.velocity * body.velocity;
-            result.1 += body.mass * self.gravity * (body.position + self.size as f32) * self.angle.sin();
+            result.1 +=
+                body.mass * self.gravity * (body.position + self.size as f32) * self.angle.sin();
         }
 
         result
+    }
+
+    pub fn run_command(&mut self, raw: &str) -> Result<(), &str> {
+        let mut cmd = raw.split_whitespace();
+
+        match cmd.next() {
+            Some("set") => match cmd.next() {
+                Some("angle") => {
+                    self.angle = match cmd.next() {
+                        Some(raw) => match raw.parse() {
+                            Ok(result) => result,
+                            _ => return Err("Unexpected argument"),
+                        },
+                        _ => return Err("Unexpected argument"),
+                    };
+                }
+                Some("gravity") => {
+                    self.gravity = match cmd.next() {
+                        Some(raw) => match raw.parse() {
+                            Ok(result) => result,
+                            _ => return Err("Unexpected argument"),
+                        },
+                        _ => return Err("Unexpected argument"),
+                    };
+                }
+                Some("kfriction") => {
+                    self.kfriction_coefficient = match cmd.next() {
+                        Some(raw) => match raw.parse() {
+                            Ok(result) => result,
+                            _ => return Err("Unexpected argument"),
+                        },
+                        _ => return Err("Unexpected argument"),
+                    };
+                }
+                Some("sfriction") => {
+                    self.sfriction_coefficient = match cmd.next() {
+                        Some(raw) => match raw.parse() {
+                            Ok(result) => result,
+                            _ => return Err("Unexpected argument"),
+                        },
+                        _ => return Err("Unexpected argument"),
+                    };
+                }
+                Some("elastic_collision") => {
+                    self.elastic_collisions = match cmd.next() {
+                        Some(raw) => match raw.parse() {
+                            Ok(result) => result,
+                            _ => return Err("Unexpected argument"),
+                        },
+                        _ => return Err("Unexpected argument"),
+                    };
+                }
+                Some("size") => {
+                    self.size = match cmd.next() {
+                        Some(raw) => match raw.parse() {
+                            Ok(result) => result,
+                            _ => return Err("Unexpected argument"),
+                        },
+                        _ => return Err("Unexpected argument"),
+                    };
+                }
+                _ => return Err("Unexpected argument"),
+            },
+            Some("new") => self.bodies.push(Body::new(
+                match cmd.next() {
+                    Some(raw) => match raw.parse() {
+                        Ok(result) => result,
+                        _ => return Err("Unexpected argument"),
+                    },
+                    _ => return Err("Unexpected argument"),
+                },
+                match cmd.next() {
+                    Some(raw) => match raw.parse() {
+                        Ok(result) => result,
+                        _ => return Err("Unexpected argument"),
+                    },
+                    _ => return Err("Unexpected argument"),
+                },
+                match cmd.next() {
+                    Some(raw) => match raw.parse() {
+                        Ok(result) => result,
+                        _ => return Err("Unexpected argument"),
+                    },
+                    _ => return Err("Unexpected argument"),
+                },
+                match cmd.next() {
+                    Some(raw) => match raw.parse() {
+                        Ok(result) => result,
+                        _ => return Err("Unexpected argument"),
+                    },
+                    _ => return Err("Unexpected argument"),
+                },
+                Color::from((
+                    match cmd.next() {
+                        Some(raw) => match raw.parse() {
+                            Ok(result) => result,
+                            _ => return Err("Unexpected argument"),
+                        },
+                        _ => return Err("Unexpected argument"),
+                    },
+                    match cmd.next() {
+                        Some(raw) => match raw.parse() {
+                            Ok(result) => result,
+                            _ => return Err("Unexpected argument"),
+                        },
+                        _ => return Err("Unexpected argument"),
+                    },
+                    match cmd.next() {
+                        Some(raw) => match raw.parse() {
+                            Ok(result) => result,
+                            _ => return Err("Unexpected argument"),
+                        },
+                        _ => return Err("Unexpected argument"),
+                    },
+                )),
+            )),
+            _ => return Err("Unexpected command"),
+        }
+
+        Ok(())
+    }
+
+    pub fn run_script(&mut self, filename: &str) -> Result<(), Box<dyn Error>> {
+        let contents = fs::read_to_string(filename)?;
+
+        for line in contents.lines() {
+            self.run_command(line)?;
+        }
+
+        Ok(())
     }
 }
 
